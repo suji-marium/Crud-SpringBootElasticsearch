@@ -45,90 +45,90 @@ public class EmployeeService {
         List<EmployeeDetails> employees = StreamSupport.stream(employeeRepo.findAll().spliterator(), false)
         .collect(Collectors.toList());
         // Creating a set with all manager IDs
-    Set<String> allManagerIds = new HashSet<>();
-    for (EmployeeDetails employeeDetails : employees) {
-        if ("Account Manager".equals(employeeDetails.getDesignation())) {
-            allManagerIds.add(employeeDetails.getId());
+        Set<String> allManagerIds = new HashSet<>();
+        for (EmployeeDetails employeeDetails : employees) {
+            if ("Account Manager".equals(employeeDetails.getDesignation())) {
+                allManagerIds.add(employeeDetails.getId());
+            }
         }
-    }
 
-    // Group by managerId
-    Map<String, List<EmployeeDetails>> employeesByManager = employees.stream()
-        .filter(emp -> emp.getManagerId() != null) // Ensure no null keys
-        .collect(Collectors.groupingBy(EmployeeDetails::getManagerId, Collectors.toList()));
+        // Group by managerId
+        Map<String, List<EmployeeDetails>> employeesByManager = employees.stream()
+            .filter(emp -> emp.getManagerId() != null) // Ensure no null keys
+            .collect(Collectors.groupingBy(EmployeeDetails::getManagerId, Collectors.toList()));
 
-    for (String mngId : allManagerIds) {
-        employeesByManager.putIfAbsent(mngId, new ArrayList<>());
-    }
+        for (String mngId : allManagerIds) {
+            employeesByManager.putIfAbsent(mngId, new ArrayList<>());
+        }
 
-    // System.out.println(employeesByManager);
-    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+    
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
-    // Create the filtered responses
-    List<EmployeeResponse> filteredResponses = employeesByManager.entrySet().stream()
-        .map(entry -> {
-            String currentManagerId = entry.getKey();
-            List<EmployeeDetails> employeeList = entry.getValue();
+        // Create the filtered responses
+        List<EmployeeResponse> filteredResponses = employeesByManager.entrySet().stream()
+            .map(entry -> {
+                String currentManagerId = entry.getKey();
+                List<EmployeeDetails> employeeList = entry.getValue();
 
-            Optional<EmployeeDetails> managerOpt = employeeRepo.findById(currentManagerId);
-            String managerName = managerOpt.map(EmployeeDetails::getName).orElse("Unknown");
-            String managerDept = managerOpt.map(EmployeeDetails::getDepartment).orElse("Unknown");
+                Optional<EmployeeDetails> managerOpt = employeeRepo.findById(currentManagerId);
+                String managerName = managerOpt.map(EmployeeDetails::getName).orElse("Unknown");
+                String managerDept = managerOpt.map(EmployeeDetails::getDepartment).orElse("Unknown");
 
-            // Filter employees based on condition
-            List<EmployeeResponseDTO> filteredEmployeeList = employeeList.stream()
-                .filter(employee -> {
-                    String dateOfJoining = employee.getDateOfJoining();
-                    if (dateOfJoining == null) return false; // Skip if dateOfJoining is null
-                    LocalDateTime joiningDate = LocalDateTime.parse(employee.getDateOfJoining(), formatter);
-                    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-                    int yearsOfExperienceCalculated = (int) ChronoUnit.YEARS.between(joiningDate, now);
-
-                    return (managerId == null || managerId.equalsIgnoreCase(currentManagerId)) &&
-                        (yearsOfExperience == null || yearsOfExperienceCalculated >= yearsOfExperience);
-                }).map(emp -> new EmployeeResponseDTO(
-                    emp.getId(),
-                    emp.getName(),
-                    emp.getDesignation(),
-                    emp.getDepartment(),
-                    emp.getEmail(),
-                    emp.getMobile(),
-                    emp.getLocation(),
-                    emp.getDateOfJoining(),
-                    emp.getCreatedTime(),
-                    emp.getUpdatedTime()
-                ))
-                .collect(Collectors.toList());
-
-            // Include the manager in the response if conditions are met
-            if ((managerId == null || managerId.equalsIgnoreCase(currentManagerId)) && Integer.parseInt(currentManagerId) > 0 &&
-                (yearsOfExperience == null || employeeList.stream()
-                    .anyMatch(employee -> {
+                // Filter employees based on condition
+                List<EmployeeResponseDTO> filteredEmployeeList = employeeList.stream()
+                    .filter(employee -> {
+                        String dateOfJoining = employee.getDateOfJoining();
+                        if (dateOfJoining == null) return false; // Skip if dateOfJoining is null
                         LocalDateTime joiningDate = LocalDateTime.parse(employee.getDateOfJoining(), formatter);
                         LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
                         int yearsOfExperienceCalculated = (int) ChronoUnit.YEARS.between(joiningDate, now);
-                        return yearsOfExperienceCalculated >= yearsOfExperience;
-                    }))) {
-                return new EmployeeResponse(
-                    managerName,
-                    managerDept,
-                    currentManagerId,
-                    filteredEmployeeList
-                );
-            } else {
-                return null;
-            }
-        })
-        .filter(Objects::nonNull) // Remove null responses
-        .collect(Collectors.toList());
 
-    System.out.println(filteredResponses);
+                        return (managerId == null || managerId.equalsIgnoreCase(currentManagerId)) &&
+                            (yearsOfExperience == null || yearsOfExperienceCalculated >= yearsOfExperience);
+                    }).map(emp -> new EmployeeResponseDTO(
+                        emp.getId(),
+                        emp.getName(),
+                        emp.getDesignation(),
+                        emp.getDepartment(),
+                        emp.getEmail(),
+                        emp.getMobile(),
+                        emp.getLocation(),
+                        emp.getDateOfJoining(),
+                        emp.getCreatedTime(),
+                        emp.getUpdatedTime()
+                    ))
+                    .collect(Collectors.toList());
 
-    String responseMessage = filteredResponses.isEmpty() ? "No employees found" : "Successfully fetched";
+                // Include the manager in the response if conditions are met
+                if ((managerId == null || managerId.equalsIgnoreCase(currentManagerId)) && Integer.parseInt(currentManagerId) > 0 &&
+                    (yearsOfExperience == null || employeeList.stream()
+                        .anyMatch(employee -> {
+                            LocalDateTime joiningDate = LocalDateTime.parse(employee.getDateOfJoining(), formatter);
+                            LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+                            int yearsOfExperienceCalculated = (int) ChronoUnit.YEARS.between(joiningDate, now);
+                            return yearsOfExperienceCalculated >= yearsOfExperience;
+                        }))) {
+                    return new EmployeeResponse(
+                        managerName,
+                        managerDept,
+                        currentManagerId,
+                        filteredEmployeeList
+                    );
+                } else {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull) // Remove null responses
+            .collect(Collectors.toList());
 
-    EmployeeResponseGet response = new EmployeeResponseGet(responseMessage, filteredResponses);
-    return ResponseEntity.ok(response);
-        
-    }
+        System.out.println(filteredResponses);
+
+        String responseMessage = filteredResponses.isEmpty() ? "No employees found" : "Successfully fetched";
+
+        EmployeeResponseGet response = new EmployeeResponseGet(responseMessage, filteredResponses);
+        return ResponseEntity.ok(response);
+            
+        }
     
     public ResponseEntity<EmployeeResponseUpdate> deleteEmployee(String id) {
         if(employeeRepo.existsById(id)){
