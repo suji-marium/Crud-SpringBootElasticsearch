@@ -14,9 +14,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
@@ -166,8 +164,6 @@ public class EmployeeService {
             EmployeeResponseUpdate employeeResponseUpdate=new EmployeeResponseUpdate("Employee not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(employeeResponseUpdate);
         }
-        
-        
     }
     public ResponseEntity<EmployeeResponseUpdate> updateEmployee(String id, String managerId) {
 
