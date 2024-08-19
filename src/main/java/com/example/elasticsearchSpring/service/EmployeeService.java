@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -31,7 +30,27 @@ public class EmployeeService {
     @Autowired
     EmployeeRepo employeeRepo;
     public ResponseEntity<EmployeeResponseUpdate> addEmployee(EmployeeDetails employeeDetails) {
+        List<EmployeeDetails> employees=employeeRepo.findAll();
+
+        //To check whether there is only 1 manager for a department
+        if (employeeDetails.getDesignation().matches("Account Manager")) {
+            for (EmployeeDetails emp : employees){
+                if (emp.getDepartment().matches(employeeDetails.getDepartment())) {
+                    EmployeeResponseUpdate employeeResponseUpdate=new EmployeeResponseUpdate("Department " + employeeDetails.getDepartment() + " already has a manager.");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(employeeResponseUpdate);
+                }
+            }
+        }
+
+        //To check whether the adding employee have a manager or not
+        List<EmployeeDetails> employeesOfDep=employeeRepo.findAllByDepartment(employeeDetails.getDepartment());
+        //System.out.println(employeesOfDep);
         
+        if(employeesOfDep.isEmpty() && employeeDetails.getDesignation().matches("associate")){
+            EmployeeResponseUpdate employeeResponseUpdate=new EmployeeResponseUpdate("Department " + employeeDetails.getDepartment() + " doesn't contain a manager.");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(employeeResponseUpdate);
+        }
+
         Date today=new Date();
         employeeDetails.setId(IdGenerator.generateId());
         employeeDetails.setCreatedTime(today);
@@ -40,10 +59,10 @@ public class EmployeeService {
         EmployeeResponseUpdate employeeResponseUpdate=new EmployeeResponseUpdate("Employee added successfully");
         return ResponseEntity.ok(employeeResponseUpdate);
     }
+
     public ResponseEntity<EmployeeResponseGet> viewEmployees(Integer yearsOfExperience, String managerId) {
 
-        List<EmployeeDetails> employees = StreamSupport.stream(employeeRepo.findAll().spliterator(), false)
-        .collect(Collectors.toList());
+        List<EmployeeDetails> employees = employeeRepo.findAll();
         // Creating a set with all manager IDs
         Set<String> allManagerIds = new HashSet<>();
         for (EmployeeDetails employeeDetails : employees) {
@@ -54,7 +73,7 @@ public class EmployeeService {
 
         // Group by managerId
         Map<String, List<EmployeeDetails>> employeesByManager = employees.stream()
-            .filter(emp -> emp.getManagerId() != null) // Ensure no null keys
+            .filter(emp -> emp.getManagerId() != null) 
             .collect(Collectors.groupingBy(EmployeeDetails::getManagerId, Collectors.toList()));
 
         for (String mngId : allManagerIds) {
@@ -71,14 +90,14 @@ public class EmployeeService {
                 List<EmployeeDetails> employeeList = entry.getValue();
 
                 Optional<EmployeeDetails> managerOpt = employeeRepo.findById(currentManagerId);
-                String managerName = managerOpt.map(EmployeeDetails::getName).orElse("Unknown");
-                String managerDept = managerOpt.map(EmployeeDetails::getDepartment).orElse("Unknown");
+                String managerName = managerOpt.get().getName();
+                String managerDept = managerOpt.get().getDepartment();
 
                 // Filter employees based on condition
                 List<EmployeeResponseDTO> filteredEmployeeList = employeeList.stream()
                     .filter(employee -> {
                         String dateOfJoining = employee.getDateOfJoining();
-                        if (dateOfJoining == null) return false; // Skip if dateOfJoining is null
+                        if (dateOfJoining == null) return false; 
                         LocalDateTime joiningDate = LocalDateTime.parse(employee.getDateOfJoining(), formatter);
                         LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
                         int yearsOfExperienceCalculated = (int) ChronoUnit.YEARS.between(joiningDate, now);
@@ -120,8 +139,6 @@ public class EmployeeService {
             })
             .filter(Objects::nonNull) // Remove null responses
             .collect(Collectors.toList());
-
-        System.out.println(filteredResponses);
 
         String responseMessage = filteredResponses.isEmpty() ? "No employees found" : "Successfully fetched";
 
