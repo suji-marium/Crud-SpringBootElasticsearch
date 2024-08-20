@@ -80,7 +80,7 @@ public class EmployeeService {
             employeesByManager.putIfAbsent(mngId, new ArrayList<>());
         }
 
-    
+        System.out.println(employeesByManager);
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
         // Create the filtered responses
@@ -90,14 +90,11 @@ public class EmployeeService {
                 List<EmployeeDetails> employeeList = entry.getValue();
 
                 Optional<EmployeeDetails> managerOpt = employeeRepo.findById(currentManagerId);
-                String managerName = managerOpt.get().getName();
-                String managerDept = managerOpt.get().getDepartment();
-
+                String managerName = managerOpt.map(EmployeeDetails::getName).orElse("Unknown");
+                String managerDept = managerOpt.map(EmployeeDetails::getDepartment).orElse("Unknown");
                 // Filter employees based on condition
                 List<EmployeeResponseDTO> filteredEmployeeList = employeeList.stream()
                     .filter(employee -> {
-                        String dateOfJoining = employee.getDateOfJoining();
-                        if (dateOfJoining == null) return false; 
                         LocalDateTime joiningDate = LocalDateTime.parse(employee.getDateOfJoining(), formatter);
                         LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
                         int yearsOfExperienceCalculated = (int) ChronoUnit.YEARS.between(joiningDate, now);
@@ -139,7 +136,7 @@ public class EmployeeService {
             })
             .filter(Objects::nonNull) // Remove null responses
             .collect(Collectors.toList());
-
+        System.out.println(filteredResponses);
         String responseMessage = filteredResponses.isEmpty() ? "No employees found" : "Successfully fetched";
 
         EmployeeResponseGet response = new EmployeeResponseGet(responseMessage, filteredResponses);

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(indexName="employee")
+@Document(indexName="employeelist")
 public class EmployeeDetails {
     @Id
     private String id;
