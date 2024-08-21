@@ -10,4 +10,11 @@ class ElasticsearchSpringApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+    public void testMainMethod() {
+        String[] args = {};
+        
+        ElasticsearchSpringApplication.main(args);
+        
+    }
 }
