@@ -16,7 +16,6 @@ import com.example.elasticsearchSpring.model.EmployeeResponseGet;
 import com.example.elasticsearchSpring.model.EmployeeResponseUpdate;
 import com.example.elasticsearchSpring.repository.EmployeeRepo;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +101,7 @@ public class EmployeeServiceTest {
         employee.setName("Jane");
         employee.setDesignation("associate");
         employee.setDepartment("Sales");
-        employee.setDateOfJoining(LocalDateTime.now().minusYears(2).toString());
+        //employee.setDateOfJoining(LocalDateTime.now().minusYears(2).toString());
 
         List<EmployeeDetails> employees = Arrays.asList(manager, employee);
 

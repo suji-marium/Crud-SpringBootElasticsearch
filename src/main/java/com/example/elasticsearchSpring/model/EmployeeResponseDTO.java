@@ -18,7 +18,7 @@ public class EmployeeResponseDTO {
     private String email;
     private String mobile;
     private String location;
-    private String dateOfJoining;
+    private Date dateOfJoining;
     private Date createdTime;
     private Date updatedTime;
 }

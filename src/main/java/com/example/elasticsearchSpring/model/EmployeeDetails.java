@@ -33,7 +33,7 @@ public class EmployeeDetails {
     private String mobile;
     private String location;
     private String managerId;
-    private String dateOfJoining;
+    private Date dateOfJoining;
     private Date createdTime;
     private Date updatedTime;
     
